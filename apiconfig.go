@@ -4,6 +4,7 @@ import "net/http"
 
 type apiConfig struct {
 	fileserverHits int
+	DB 			   *DB
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {

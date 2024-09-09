@@ -10,13 +10,25 @@ func readiness(w http.ResponseWriter, req *http.Request)  {
 
 func main() {
 	mux := http.NewServeMux()
-	apiCfg := &apiConfig{}
+
+	db, err := NewDB("database.json")
+	if err != nil {
+		fmt.Printf("Error creating database")
+		return
+	}
+
+	apiCfg := apiConfig{
+		fileserverHits: 0,
+		DB: db,
+	}
 
 	mux.HandleFunc("GET /api/healthz", readiness)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
 	mux.HandleFunc("/api/reset", apiCfg.resetHandler)
-	mux.HandleFunc("/api/validate_chirp", chirpvalidHandler)
-
+	mux.HandleFunc("POST /api/chirps", apiCfg.chirpsPOSTHandler)
+	mux.HandleFunc("GET /api/chirps", apiCfg.chirpsGETHandler)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.chirpGETbyidHandler)
+	mux.HandleFunc("POST /api/users", apiCfg.createUsersHandler)
 
 	path:= "/app/"
 	fs := http.FileServer(http.Dir("."))
@@ -28,6 +40,6 @@ func main() {
 		Handler:mux,
 	}
 
-	err := myserv.ListenAndServe()
+	err = myserv.ListenAndServe()
 	if err!=nil {fmt.Printf("Server Listen/Serve Error: %v\n", err)}
 }
