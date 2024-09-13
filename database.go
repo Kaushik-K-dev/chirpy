@@ -8,8 +8,8 @@ type DB struct {
 }
 
 type DBStructure struct {
-	Chirps map[int]Chirp `json:"chirps"`
-	Users  map[int]User  `json:"users"`
+	Chirps map[int]*Chirp `json:"chirps"`
+	Users  map[int]*User  `json:"users"`
 }
 
 func NewDB(path string) (*DB, error) {
@@ -22,7 +22,7 @@ func NewDB(path string) (*DB, error) {
 	return db, err
 }
 
-func (db *DB) writeDB(dbStruct DBStructure) error {
+func (db *DB) writeDB(dbStruct *DBStructure) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 
@@ -33,9 +33,9 @@ func (db *DB) writeDB(dbStruct DBStructure) error {
 }
 
 func (db *DB) createDB() error {
-	dbStruct := DBStructure{
-		Chirps: map[int]Chirp{},
-		Users:  map[int]User{},
+	dbStruct := &DBStructure{
+		Chirps: map[int]*Chirp{},
+		Users:  map[int]*User{},
 	}
 	return db.writeDB(dbStruct)
 }
@@ -48,25 +48,25 @@ func (db *DB) ensureDB() error {
 	return err
 }
 
-func (db *DB) loadDB() (DBStructure, error) {
+func (db *DB) loadDB() (*DBStructure, error) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
 
 	data, err := os.ReadFile(db.path)
-	if err != nil {return DBStructure{}, err}
+	if err != nil {return nil, err}
 
-	var dbStruct DBStructure
+	dbStruct := &DBStructure{}
 	err = json.Unmarshal(data, &dbStruct)
-	if err != nil {return DBStructure{}, err}
+	if err != nil {return nil, err}
 	return dbStruct, nil
 }
 
-func (db *DB) GetChirp(ID int) (Chirp, error) {
+func (db *DB) GetChirp(ID int) (*Chirp, error) {
 	dbStruct, err := db.loadDB()
-	if err != nil {return Chirp{}, err}
+	if err != nil {return nil, err}
 
 	chirp, ok := dbStruct.Chirps[ID]
-	if !ok {return Chirp{}, fmt.Errorf("Error: Chirp doesn't exist")}
+	if !ok {return nil, fmt.Errorf("Error: Chirp doesn't exist")}
 
 	return chirp, nil
 }
