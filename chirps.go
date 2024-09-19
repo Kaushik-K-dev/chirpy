@@ -1,5 +1,5 @@
 package main
-import ("fmt"; "net/http"; "encoding/json"; "strings"; "strconv")
+import ("fmt"; "net/http"; "encoding/json"; "strings"; "strconv"; "sort")
 import "github.com/golang-jwt/jwt/v5"
 
 type Chirp struct {
@@ -129,10 +129,35 @@ func (cfg *apiConfig) chirpsGETHandler(w http.ResponseWriter, req *http.Request)
 		respError(w, http.StatusInternalServerError, "Could not load chirps")
 		return
 	}
-	respJson(w, http.StatusOK, chirps)	
+	AuthorId := req.URL.Query().Get("author_id")
+	sortOrder := req.URL.Query().Get("sort")
+	var chirpsbyAuth []*Chirp
+	if AuthorId != "" {
+		authId, err := strconv.Atoi(AuthorId)
+		if err != nil {
+			respError(w, http.StatusBadRequest, "Invalid author_id")
+			return
+		}
+
+		for _, chirp := range chirps {
+			if chirp.AuthorId == authId {
+				chirpsbyAuth = append(chirpsbyAuth, chirp)
+			}
+		}
+	} else {chirpsbyAuth = chirps}
+
+	if sortOrder == "" || sortOrder == "asc" {
+		sort.Slice(chirpsbyAuth, func(i, j int) bool {return chirpsbyAuth[i].Id < chirpsbyAuth[j].Id})
+	} else if sortOrder == "desc" {
+		sort.Slice(chirpsbyAuth, func(i, j int) bool {return chirpsbyAuth[i].Id > chirpsbyAuth[j].Id})
+	} else {
+		respError(w, http.StatusBadRequest, "Invalid sort parameter. Must be 'asc' or 'desc'.")
+		return
+	}
+	respJson(w, http.StatusOK, chirpsbyAuth)
 }
 
-func (cfg *apiConfig) chirpGETbyidHandler(w http.ResponseWriter, req *http.Request) {
+func (cfg *apiConfig) chirpGETbyIdHandler(w http.ResponseWriter, req *http.Request) {
 	chirpID, err := strconv.Atoi(req.PathValue("chirpID"))
 	if err != nil {
 		fmt.Printf("chirpID: %v, Error: %v", chirpID, err)
