@@ -17,6 +17,8 @@ func main() {
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {log.Fatal("JWT_SECRET environment variable not set")}
+	polkaKey := os.Getenv("PolkaKey")
+	if polkaKey == "" {log.Fatal("PolkaKey environment variable not set")}
 
 	mux := http.NewServeMux()
 
@@ -27,6 +29,7 @@ func main() {
 		fileserverHits: 0,
 		DB: db,
 		jwtSecret: jwtSecret,
+		polkaKey: polkaKey,
 	}
 
 	mux.HandleFunc("GET /api/healthz", readiness)
@@ -43,7 +46,9 @@ func main() {
 	mux.HandleFunc("POST /api/login", apiCfg.loginHandler)
 
 	mux.HandleFunc("POST /api/refresh", apiCfg.refreshHandler)
-	mux.HandleFunc("POST /api/revoke", apiCfg.revokeHandler)	
+	mux.HandleFunc("POST /api/revoke", apiCfg.revokeHandler)
+
+	mux.HandleFunc("POST /api/polka/webhooks", apiCfg.polkaHandler)
 
 	path:= "/app/"
 	fs := http.FileServer(http.Dir("."))

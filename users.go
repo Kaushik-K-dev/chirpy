@@ -9,11 +9,13 @@ type User struct{
 	Password string `json:"hashed_pass"`
 	RefreshToken string `json:"refresh_token"`
 	RefreshTokenExpiration time.Time `json:"refresh_expiration"`
+	IsChirpyRed bool `json:"is_chirpy_red"`
 }
 
 type UserResp struct{
 	Id int `json:"id"`
 	Email string `json:"email"`
+	IsChirpyRed bool `json:"is_chirpy_red"`
 }
 
 type LoginResp struct{
@@ -21,6 +23,7 @@ type LoginResp struct{
 	Email string `json:"email"`
 	Token string `json:"token"`
 	RefreshToken string `json:"refresh_token"`
+	IsChirpyRed bool `json:"is_chirpy_red"`
 }
 
 func (db *DB) CreateUser(email, password string) (*User, error) {
@@ -44,6 +47,7 @@ func (db *DB) CreateUser(email, password string) (*User, error) {
 		Password: hashedPass,
 		RefreshToken: "",
 		RefreshTokenExpiration: time.Time{},
+		IsChirpyRed: false,
 	}
 	dbStruct.Users[id] = &user
 
@@ -71,7 +75,6 @@ func (db *DB) GetUserbyEmail(email string) (*User, error) {
 			return user, nil
 		}
 	}
-
 	return nil, fmt.Errorf("Error: User doesn't exist")
 }
 
@@ -105,6 +108,7 @@ func (cfg *apiConfig) createUsersHandler(w http.ResponseWriter, req *http.Reques
 	type parameters struct {
 		Password string `json:"password"`
 		Email string `json:"email"`
+		IsChirpyRed bool `json:"is_chirpy_red"`
 	}
 
 	decoder := json.NewDecoder(req.Body)
@@ -124,6 +128,7 @@ func (cfg *apiConfig) createUsersHandler(w http.ResponseWriter, req *http.Reques
 	respJson(w, http.StatusCreated, UserResp{
 		Id:    user.Id,
 		Email: user.Email,
+		IsChirpyRed: user.IsChirpyRed,
 	})
 }
 
@@ -188,6 +193,7 @@ func (cfg *apiConfig) loginHandler(w http.ResponseWriter, req *http.Request) {
 		Email: user.Email,
 		Token: tokenString,
 		RefreshToken: refreshToken,
+		IsChirpyRed: user.IsChirpyRed,
 	})
 }
 
@@ -259,6 +265,7 @@ func (cfg *apiConfig) updateUserHandler(w http.ResponseWriter, req *http.Request
     respJson(w, http.StatusOK, UserResp{
 		Id:    user.Id,
 		Email: user.Email,
+		IsChirpyRed: user.IsChirpyRed,
 	})
 }
 
