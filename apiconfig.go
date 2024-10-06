@@ -1,12 +1,14 @@
 package main
 import "fmt"
 import "net/http"
+import "github.com/Kaushik-K-dev/chirpy/internal/database"
 
 type apiConfig struct {
 	fileserverHits int
-	DB 			   *DB
+	DBQueries      *database.Queries
 	jwtSecret      string
 	polkaKey	   string
+	platform       string 
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -30,7 +32,17 @@ func (cfg *apiConfig) metricsHandler(w http.ResponseWriter, req *http.Request) {
 }
 
 func (cfg *apiConfig) resetHandler(w http.ResponseWriter, req *http.Request) {
+	if cfg.platform != "dev" {
+		respError(w, http.StatusForbidden, "Not a developer")
+		return
+	}
 	cfg.fileserverHits = 0
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	fmt.Fprintf(w, "Hits: 0\n")
+	err := cfg.DBQueries.DeleteAllUsers(req.Context())
+    if err != nil {
+		respError(w, http.StatusInternalServerError, "Failed to reset users")
+        return
+    }
+	respJson(w, http.StatusOK, nil)
 }
