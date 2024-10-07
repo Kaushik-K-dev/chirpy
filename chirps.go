@@ -162,7 +162,25 @@ func profanityCheck(body string) string {
 	return strings.Join(words, " ")
 }
 
-// func (cfg *apiConfig) chirpsGETHandler(w http.ResponseWriter, req *http.Request) {
+func (cfg *apiConfig) chirpsGETHandler(w http.ResponseWriter, req *http.Request) {
+	var chirps []Chirp
+	items, err := cfg.DBQueries.ListChirps(req.Context())
+	if err != nil {
+		respError(w, http.StatusInternalServerError, "Could not load chirps")
+		return
+	}
+	for _, item := range items {
+		chirp := Chirp{
+			Id:			item.ID,
+			CreatedAt:	item.CreatedAt,
+			UpdatedAt:	item.UpdatedAt,
+			Body:		item.Body,
+			UserId:		item.UserID,
+		}
+		chirps = append(chirps, chirp)
+	}
+	respJson(w, http.StatusOK, chirps)
+}
 // 	db := cfg.DB
 // 	chirps, err := db.GetChirps()
 // 	if err != nil {
@@ -197,13 +215,26 @@ func profanityCheck(body string) string {
 // 	respJson(w, http.StatusOK, chirpsbyAuth)
 // }
 
-// func (cfg *apiConfig) chirpGETbyIdHandler(w http.ResponseWriter, req *http.Request) {
-// 	chirpID, err := strconv.Atoi(req.PathValue("chirpID"))
-// 	if err != nil {
-// 		fmt.Printf("chirpID: %v, Error: %v", chirpID, err)
-// 		respError(w, http.StatusBadRequest, "Invalid Chirp ID")
-// 		return
-// 	}
+func (cfg *apiConfig) chirpGETbyIdHandler(w http.ResponseWriter, req *http.Request) {
+	chirpID, err := uuid.Parse(req.PathValue("chirpID"))
+	if err != nil {
+		fmt.Printf("chirpID: %v, Error: %v", chirpID, err)
+		respError(w, http.StatusBadRequest, "Invalid Chirp ID")
+		return
+	}
+	chirp, err := cfg.DBQueries.GetChirpByID(req.Context(), chirpID)
+		if err != nil {
+		respError(w, http.StatusNotFound, "Couldn't find Chirp")
+		return
+	}
+	respJson(w, http.StatusOK, Chirp{
+		Id:			chirp.ID,
+		CreatedAt:	chirp.CreatedAt,
+		UpdatedAt:	chirp.UpdatedAt,
+		Body:		chirp.Body,
+		UserId:		chirp.UserID,
+	})
+}
 
 // 	chirp, err := cfg.DB.GetChirp(chirpID)
 // 	if err != nil {

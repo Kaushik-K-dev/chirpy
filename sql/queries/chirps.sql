@@ -16,8 +16,7 @@ WHERE id = $1;
 -- name: ListChirps :many
 SELECT id, created_at, updated_at, body, user_id
 FROM chirps
-ORDER BY created_at DESC
-LIMIT $1 OFFSET $2;
+ORDER BY created_at ASC;
 
 -- name: UpdateChirp :one
 UPDATE chirps

@@ -72,17 +72,11 @@ func (q *Queries) GetChirpByID(ctx context.Context, id uuid.UUID) (Chirp, error)
 const listChirps = `-- name: ListChirps :many
 SELECT id, created_at, updated_at, body, user_id
 FROM chirps
-ORDER BY created_at DESC
-LIMIT $1 OFFSET $2
+ORDER BY created_at ASC
 `
 
-type ListChirpsParams struct {
-	Limit  int32
-	Offset int32
-}
-
-func (q *Queries) ListChirps(ctx context.Context, arg ListChirpsParams) ([]Chirp, error) {
-	rows, err := q.db.QueryContext(ctx, listChirps, arg.Limit, arg.Offset)
+func (q *Queries) ListChirps(ctx context.Context) ([]Chirp, error) {
+	rows, err := q.db.QueryContext(ctx, listChirps)
 	if err != nil {
 		return nil, err
 	}

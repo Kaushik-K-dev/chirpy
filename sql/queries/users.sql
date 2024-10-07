@@ -21,8 +21,7 @@ WHERE email = $1;
 -- name: ListUsers :many
 SELECT id, created_at, updated_at, email
 FROM users
-ORDER BY created_at DESC
-LIMIT $1 OFFSET $2;
+ORDER BY created_at ASC;
 
 -- name: UpdateUserEmail :one
 UPDATE users
